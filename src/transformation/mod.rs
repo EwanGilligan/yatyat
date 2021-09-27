@@ -4,7 +4,7 @@ pub mod err;
 
 /// Representation of a transformation on the points 0..n-1
 /// This is stored as a vector using the images of each point from 0..n-1
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Transformation {
     degree: usize,
     vals: Arc<[usize]>,
@@ -18,7 +18,7 @@ impl Transformation {
     /// Create transformation from vec of images
     /// This will panic if the points are not defined on the given degree.
     pub fn from_vec(degree: usize, vals: Vec<usize>) -> Result<Self, err::TransformationError> {
-        if !vals.iter().all(|x| *x < degree) {
+        if vals.len() != degree || !vals.iter().all(|x| *x < degree) {
             Err(err::TransformationError::InvalidImage {
                 degree,
                 image: vals,
@@ -93,9 +93,17 @@ impl Transformation {
 
     /// Compose two tranformations.
     /// This is only defined for transformations of the same degree
+    /// ```
+    /// use yatyat::transformation::Transformation;
+    ///
+    /// let f = Transformation::from_vec(3, vec![0, 2, 2]).unwrap();
+    /// let g = Transformation::from_vec(3, vec![2, 1, 0]).unwrap();
+    /// let fg = f.multiply(&g).unwrap();
+    /// assert_eq!(0, fg.apply(1).unwrap())
+    /// ```
     pub fn multiply(&self, other: &Self) -> Result<Self, err::TransformationError> {
         if self.degree == other.degree {
-            let vals = (0..self.degree - 1)
+            let vals = (0..self.degree)
                 .map(|x| other.apply(self.apply(x).unwrap()).unwrap())
                 .collect();
             Ok(Transformation::from_vec_unchecked(self.degree, vals))
@@ -116,7 +124,36 @@ mod tests {
     fn id() {
         let id0 = Transformation::id(0);
         let id10 = Transformation::id(10);
+        let f = Transformation::from_vec(2, vec![1, 1]).unwrap();
         assert!(id0.is_id());
-        assert!(id10.is_id())
+        assert!(id10.is_id());
+        assert!(!f.is_id());
+    }
+
+    #[test]
+    fn invalid_image() {
+        // Invalid for value out of range
+        let f = Transformation::from_vec(3, vec![0, 0, 4]);
+        // Invalid for too many values
+        let g = Transformation::from_vec(4, vec![1, 2, 3]);
+        assert!(f.is_err());
+        assert!(g.is_err());
+    }
+
+    #[test]
+    fn multiply_inverse() {
+        let f = Transformation::from_vec(4, vec![3, 2, 1, 0]).unwrap();
+        let f2 = f.multiply(&f).unwrap();
+        print!("{:?}", f2);
+        assert!(f2.is_id())
+    }
+
+    #[test]
+    #[test]
+    fn multiply() {
+        let f = Transformation::from_vec(4, vec![2, 2, 3, 1]).unwrap();
+        let g = Transformation::from_vec(4, vec![2, 1, 1, 3]).unwrap();
+        let fg = Transformation::from_vec(4, vec![1, 1, 3, 1]).unwrap();
+        assert_eq!(fg, f.multiply(&g).unwrap());
     }
 }
