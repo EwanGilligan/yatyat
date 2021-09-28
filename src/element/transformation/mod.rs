@@ -1,5 +1,7 @@
 use std::sync::Arc;
 
+use super::SemigroupElement;
+
 pub mod err;
 
 /// Representation of a transformation on the points 0..n-1
@@ -113,6 +115,13 @@ impl Transformation {
                 degree2: other.degree,
             })
         }
+    }
+}
+
+impl SemigroupElement for Transformation {
+    fn multiply(&self, other: &Self) -> Self {
+        // Will panic if degrees do not match
+        self.multiply(other).unwrap()
     }
 }
 
