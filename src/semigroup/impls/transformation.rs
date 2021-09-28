@@ -2,7 +2,7 @@ use std::fmt::Display;
 
 use crate::element::transformation::{err::TransformationError, Transformation};
 
-use super::Semigroup;
+use super::super::Semigroup;
 
 /// Struct that represents a transformation semigroup
 pub struct TransformationSemigroup {

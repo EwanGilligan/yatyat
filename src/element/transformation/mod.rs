@@ -1,4 +1,4 @@
-use std::{fmt::write, sync::Arc};
+use std::sync::Arc;
 
 use super::SemigroupElement;
 

@@ -2,7 +2,7 @@ use std::fmt::Display;
 
 use crate::element::SemigroupElement;
 
-pub mod transformation;
+pub mod impls;
 
 /// Trait to represent a semigroup, which is given as a list of generators.
 ///
