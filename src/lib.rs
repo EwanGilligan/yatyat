@@ -1,4 +1,5 @@
 pub mod element;
+pub mod semigroup;
 
 use std::collections::hash_map::{DefaultHasher, HashMap};
 use std::collections::HashSet;
