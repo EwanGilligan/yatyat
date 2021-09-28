@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::{fmt::write, sync::Arc};
 
 use super::SemigroupElement;
 
@@ -125,6 +125,18 @@ impl SemigroupElement for Transformation {
     }
 }
 
+impl std::fmt::Display for Transformation {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "(")?;
+        let mut sep = "";
+        for (i, x) in self.vals.iter().enumerate() {
+            write!(f, "{}{}:{}", sep, i, x)?;
+            sep = ", "
+        }
+        write!(f, ")")
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::Transformation;
@@ -157,7 +169,6 @@ mod tests {
         assert!(f2.is_id())
     }
 
-    #[test]
     #[test]
     fn multiply() {
         let f = Transformation::from_vec(4, vec![2, 2, 3, 1]).unwrap();

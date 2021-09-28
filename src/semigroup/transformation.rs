@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 use crate::element::transformation::{err::TransformationError, Transformation};
 
 use super::Semigroup;
@@ -31,6 +33,18 @@ impl TransformationSemigroup {
     /// Return the degree of the transformations in this Semigroup
     pub fn degree(&self) -> usize {
         self.degree
+    }
+}
+
+impl Display for TransformationSemigroup {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "[")?;
+        let mut sep = "";
+        for gen in self.generators() {
+            write!(f, "{}{}", sep, gen)?;
+            sep = ", "
+        }
+        write!(f, "]")
     }
 }
 
