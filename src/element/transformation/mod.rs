@@ -38,7 +38,7 @@ impl Transformation {
 
     /// Return the identity transformation on degree points
     /// ```
-    /// use yatyat::transformation::Transformation;
+    /// use yatyat::element::transformation::Transformation;
     ///
     /// let id = Transformation::id(5);
     /// assert!(id.is_id())
@@ -62,7 +62,7 @@ impl Transformation {
 
     /// Return the degree of the transformation
     /// ```
-    /// use yatyat::transformation::Transformation;
+    /// use yatyat::element::transformation::Transformation;
     ///
     /// let id = Transformation::id(8);
     /// assert_eq!(8_usize, id.degree())
@@ -74,7 +74,7 @@ impl Transformation {
     /// Apply the transformation to a given point.
     /// If x is less than the degree of the tranformation, then the result of applying the transformation is returned. Otherwise None is returned.
     /// ```
-    /// use yatyat::transformation::Transformation;
+    /// use yatyat::element::transformation::Transformation;
     ///
     /// let f = Transformation::from_vec(3, vec![0, 2, 2]).unwrap();
     /// assert_eq!(2, f.apply(1).unwrap());
@@ -94,7 +94,7 @@ impl Transformation {
     /// Compose two tranformations.
     /// This is only defined for transformations of the same degree
     /// ```
-    /// use yatyat::transformation::Transformation;
+    /// use yatyat::element::transformation::Transformation;
     ///
     /// let f = Transformation::from_vec(3, vec![0, 2, 2]).unwrap();
     /// let g = Transformation::from_vec(3, vec![2, 1, 0]).unwrap();
