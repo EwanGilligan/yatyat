@@ -38,18 +38,47 @@ impl TransformationSemigroup {
 
 impl Display for TransformationSemigroup {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "[")?;
+        write!(f, "<")?;
         let mut sep = "";
         for gen in self.generators() {
             write!(f, "{}{}", sep, gen)?;
             sep = ", "
         }
-        write!(f, "]")
+        write!(f, ">")
     }
 }
 
 impl Semigroup<Transformation> for TransformationSemigroup {
     fn generators(&self) -> &[Transformation] {
         &self.generators[..]
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use crate::element::transformation::Transformation;
+
+    use super::TransformationSemigroup;
+
+    #[test]
+    fn trivial_semigroup() {
+        assert!(TransformationSemigroup::new(&[]).is_ok());
+    }
+
+    #[test]
+    fn valid_gens() {
+        let f = Transformation::from_vec(5, vec![2, 2, 3, 1, 4]).unwrap();
+        let g = Transformation::from_vec(5, vec![2, 1, 1, 3, 2]).unwrap();
+        let s = TransformationSemigroup::new(&[f, g]);
+        assert!(s.is_ok());
+        println!("{}", s.unwrap());
+    }
+
+    #[test]
+    fn invalid_gens() {
+        let f = Transformation::from_vec(4, vec![2, 2, 3, 1]).unwrap();
+        let g = Transformation::from_vec(5, vec![2, 1, 1, 3, 2]).unwrap();
+        let s = TransformationSemigroup::new(&[f, g]);
+        assert!(s.is_err());
     }
 }
