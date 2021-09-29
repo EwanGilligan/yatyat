@@ -120,7 +120,7 @@ where
 
 /// Struct that represents a word from an alphabet.
 /// This should be used in the context of an Alphabet, to provide sanity checking.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Word<A>
 where
     A: Clone,

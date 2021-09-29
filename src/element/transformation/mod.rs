@@ -6,7 +6,7 @@ pub mod err;
 
 /// Representation of a transformation on the points 0..n-1
 /// This is stored as a vector using the images of each point from 0..n-1
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Transformation {
     degree: usize,
     vals: Arc<[usize]>,
