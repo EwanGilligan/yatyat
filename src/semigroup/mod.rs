@@ -13,5 +13,10 @@ pub trait Semigroup<U>: Display
 where
     U: SemigroupElement,
 {
+    /// Return the identity if this semigroup has one
+    fn id(&self) -> Option<U> {
+        None
+    }
+    /// Return the generators of this Semigroup.
     fn generators(&self) -> &[U];
 }
