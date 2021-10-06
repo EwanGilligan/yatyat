@@ -47,7 +47,7 @@ impl Transformation {
     /// ```
     pub fn id(degree: usize) -> Self {
         let vals: Vec<_> = if degree > 0 {
-            (0..degree - 1).collect()
+            (0..degree).collect()
         } else {
             Vec::with_capacity(0)
         };

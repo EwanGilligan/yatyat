@@ -4,6 +4,8 @@ use crate::{element::SemigroupElement, semigroup::Semigroup, DetHashMap};
 
 use snafu::Snafu;
 
+use std::rc::Rc;
+
 pub struct Alphabet<T, A>
 where
     A: Hash,
@@ -125,7 +127,7 @@ pub struct Word<A>
 where
     A: Clone,
 {
-    word: Vec<A>,
+    word: Rc<Vec<A>>,
 }
 
 impl<A> Word<A>
@@ -135,7 +137,7 @@ where
     /// Create the empty word.
     fn empty_word() -> Self {
         Self {
-            word: Vec::with_capacity(0),
+            word: Rc::new(Vec::with_capacity(0)),
         }
     }
 
@@ -171,7 +173,7 @@ where
 {
     fn from_iter<T: IntoIterator<Item = A>>(iter: T) -> Self {
         Word {
-            word: iter.into_iter().collect(),
+            word: Rc::new(iter.into_iter().collect()),
         }
     }
 }
@@ -181,7 +183,7 @@ where
     A: Display + Clone + Ord,
 {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        for symbol in &self.word {
+        for symbol in self.word.iter() {
             write!(f, "{}", symbol)?;
         }
         Ok(())

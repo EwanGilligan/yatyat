@@ -52,6 +52,10 @@ impl Semigroup<Transformation> for TransformationSemigroup {
     fn generators(&self) -> &[Transformation] {
         &self.generators[..]
     }
+
+    fn id(&self) -> Option<Transformation> {
+        Some(Transformation::id(self.degree))
+    }
 }
 
 #[cfg(test)]
