@@ -1,5 +1,6 @@
 pub mod element;
 pub mod semigroup;
+pub(crate) mod utils;
 
 use std::collections::hash_map::{DefaultHasher, HashMap};
 use std::collections::HashSet;
