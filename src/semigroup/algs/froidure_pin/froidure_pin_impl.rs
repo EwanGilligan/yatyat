@@ -2,12 +2,13 @@ use itertools::Itertools;
 
 use super::{CayleyGraphType, FroidurePinBuilder, FroidurePinResult};
 use crate::{
-    element::{self, SemigroupElement},
+    element::SemigroupElement,
     semigroup::{word::Word, Semigroup},
     utils::vec2::Vec2,
     DetHashMap,
 };
 
+#[derive(Debug)]
 struct FroidurePin<T>
 where
     T: SemigroupElement + std::hash::Hash,
@@ -43,13 +44,18 @@ where
 
 impl<T> FroidurePin<T>
 where
-    T: SemigroupElement + std::hash::Hash,
+    T: SemigroupElement + std::hash::Hash + std::fmt::Debug,
 {
-    fn new(gens: &[T]) -> Self {
+    fn new<U>(gens: &U) -> Self
+    where
+        U: Semigroup<T>,
+    {
         // Filter out duplicate generators.
-        let generators: Vec<T> = gens.iter().unique().cloned().collect();
+        let generators: Vec<T> = gens.generators().iter().unique().cloned().collect();
         // Initial elements are just the generators
-        let elements = generators.clone();
+        let mut elements = generators.clone();
+        // Insert identity into position zero.
+        elements.insert(0, gens.id().unwrap());
         let mut element_map = DetHashMap::default();
         let rewrite_rules = Vec::new();
         // Vecs for info about each element
@@ -58,20 +64,34 @@ where
         let mut suffix = Vec::new();
         let mut first = Vec::new();
         let mut length = Vec::new();
+        // Initialise identity
+        prefix.push(None);
+        last.push(0);
+        suffix.push(None);
+        first.push(0);
+        length.push(0);
+        element_map.insert(elements[0].clone(), 0);
         // Now initialise the above
-        for (index, element) in elements.iter().enumerate() {
-            element_map.insert(element.clone(), index);
+        for index in 1..elements.len() {
+            element_map.insert(elements[index].clone(), index);
             // Prefix of a generator is the empty word
-            prefix.push(None);
+            prefix.push(Some(0));
             last.push(index);
             // Suffix is similarly the empty word
-            suffix.push(None);
+            suffix.push(Some(0));
             first.push(index);
             length.push(1);
         }
         // 2d arrays for the Cayley graphs and if a word is reduced.
-        let left_cayley_graph = Vec2::new(elements.len(), elements.len());
-        let right_cayley_graph = Vec2::new(elements.len(), elements.len());
+        let mut left_cayley_graph = Vec2::new(elements.len(), elements.len());
+        let mut right_cayley_graph = Vec2::new(elements.len(), elements.len());
+        // Initialise identity for the graphs
+        for i in 1..=generators.len() {
+            left_cayley_graph[(i, 0)] = Some(i);
+            left_cayley_graph[(0, i)] = Some(i);
+            right_cayley_graph[(i, 0)] = Some(i);
+            right_cayley_graph[(i, 0)] = Some(i);
+        }
         let reduced = Vec2::new(elements.len(), elements.len());
         // Other information
         let current_word_length = 1;
@@ -94,7 +114,7 @@ where
 
     /// Given u and x, find v such that ux = v
     fn get_right_cayley_element(&self, element: usize, generator_index: usize) -> Option<usize> {
-        debug_assert!(generator_index < self.generators.len());
+        debug_assert!(generator_index != 0 && generator_index <= self.generators.len());
         self.right_cayley_graph
             .get_row(element)
             .iter()
@@ -103,7 +123,7 @@ where
 
     /// Given u and x, find v such that xu = v
     fn get_left_cayley_element(&self, element: usize, generator_index: usize) -> Option<usize> {
-        debug_assert!(generator_index < self.generators.len());
+        debug_assert!(generator_index != 0 && generator_index <= self.generators.len());
         self.left_cayley_graph
             .get_row(element)
             .iter()
@@ -112,84 +132,111 @@ where
 
     fn run(&mut self) {
         // First multiply all generators by themselves
-        for i in 0..self.generators.len() {
-            for j in 0..self.generators.len() {
-                let product = self.generators[i].multiply(&self.generators[j]);
-                if self.element_map.contains_key(&product) {
-                    // TODO add as a rule
-                } else {
-                    // Add the new element
-                    let new_pos = self.elements.len();
-                    self.elements.push(product.clone());
-                    self.element_map.insert(product, new_pos);
-                    // Then update first, last, suffix, and prefix
-                    self.first.push(i);
-                    self.last.push(j);
-                    self.prefix.push(Some(i));
-                    self.suffix.push(Some(j));
-                    // Update reduced table
-                    self.reduced.add_row();
-                    self.reduced.add_col();
-                    self.reduced[(i, j)] = true;
-                    // Update right cayley graph, left cayley graph will be done later
-                    self.right_cayley_graph.add_row();
-                    self.right_cayley_graph.add_col();
-                    self.left_cayley_graph.add_row();
-                    self.left_cayley_graph.add_col();
-                    // a_i * a_j = new element
-                    self.right_cayley_graph[(i, new_pos)] = Some(j);
-                    self.left_cayley_graph[(j, new_pos)] = Some(i);
-                    // TODO remove
-                    debug_assert!(self.elements.len() == self.element_map.len());
-                    debug_assert!(self.elements.len() == self.first.len());
-                    debug_assert!(self.elements.len() == self.last.len());
-                    debug_assert!(self.elements.len() == self.prefix.len());
-                    debug_assert!(self.elements.len() == self.suffix.len());
-                    // Update length, this is simply one more than u
-                    self.length.push(self.length[i] + 1);
+        dbg!(self.generators.len());
+        for i in 0..=self.generators.len() {
+            dbg!(i);
+            for j in 0..=self.generators.len() {
+                dbg!(j);
+                let product = self.elements[i].multiply(&self.elements[j]);
+                match self.element_map.get(&product) {
+                    Some(&index) => {
+                        // TODO add as a rule
+                        self.right_cayley_graph[(i, index)] = Some(j);
+                        self.left_cayley_graph[(j, index)] = Some(i);
+                    }
+
+                    None => {
+                        dbg!(&product);
+                        // Add the new element
+                        let new_pos = self.elements.len();
+                        self.elements.push(product.clone());
+                        self.element_map.insert(product, new_pos);
+                        // Then update first, last, suffix, and prefix
+                        self.first.push(i);
+                        self.last.push(j);
+                        self.prefix.push(Some(i));
+                        self.suffix.push(Some(j));
+                        // Update reduced table
+                        self.reduced.add_row();
+                        self.reduced.add_col();
+                        self.reduced[(i, j)] = true;
+                        // Update right cayley graph, left cayley graph will be done later
+                        self.right_cayley_graph.add_row();
+                        self.right_cayley_graph.add_col();
+                        self.left_cayley_graph.add_row();
+                        self.left_cayley_graph.add_col();
+                        // a_i * a_j = new element
+                        self.right_cayley_graph[(i, new_pos)] = Some(j);
+                        self.left_cayley_graph[(j, new_pos)] = Some(i);
+                        // TODO remove
+                        debug_assert!(self.elements.len() == self.element_map.len());
+                        debug_assert!(self.elements.len() == self.first.len());
+                        debug_assert!(self.elements.len() == self.last.len());
+                        debug_assert!(self.elements.len() == self.prefix.len());
+                        debug_assert!(self.elements.len() == self.suffix.len());
+                        // Update length, this is simply one more than u
+                        self.length.push(self.length[i] + 1);
+                    }
                 }
             }
         }
         // Then continue unless we found no new elements
-        if self.generators.len() == self.elements.len() {
+        if self.generators.len() + 1 == self.elements.len() {
             return;
         }
         self.current_word_length = 2;
-        let mut u = 0;
-        let mut v = 0;
-        let mut last = self.generators.len() - 1;
+        // Take first non generator element
+        let mut u = self.generators.len() + 1;
+        let mut v = u;
+        let mut last_elem = self.elements.len() - 1;
         loop {
             // Computation of u*a_i
-            while self.length[u] == self.current_word_length {
+            while u < self.elements.len() && self.length[u] == self.current_word_length {
+                dbg!(&u);
                 let first = self.first[u];
                 let suffix = self.suffix[u].expect("Should be larger than 2");
                 // Iterate over the generators to consider products of the form sa_i
-                for i in 0..self.generators.len() {
+                for i in 1..=self.generators.len() {
+                    dbg!(i);
                     // If sa_i is not reduced
                     if !self.reduced[(suffix, i)] {
                         // We get s*a_i from the right cayley graph.
-                        let suffix_gen = self.get_right_cayley_element(suffix, i);
+                        let suffix_gen = self
+                            .get_right_cayley_element(suffix, i)
+                            .expect("Should be present");
                         match suffix_gen {
-                            Some(suffix_gen) => {
+                            // Identity
+                            0 => {
+                                debug_assert!(self.right_cayley_graph[(u, first)] == None);
+                                self.right_cayley_graph[(u, first)] = Some(i);
+                            }
+                            // Non identity
+                            _ => {
                                 let last = self.last[suffix_gen];
                                 let prefix = self.prefix[suffix_gen].expect("Should be present");
                                 let first_prefix = self
-                                    .get_right_cayley_element(prefix, first)
+                                    .get_left_cayley_element(prefix, first)
                                     .expect("Should be present");
-                                self.right_cayley_graph[(u, i)] =
-                                    self.get_left_cayley_element(first_prefix, last);
-                            }
-                            None => {
-                                self.right_cayley_graph[(u, i)] = Some(first);
+                                let first_prefix_last = self
+                                    .get_right_cayley_element(first_prefix, last)
+                                    .expect("Should be present");
+                                debug_assert!(
+                                    self.right_cayley_graph[(u, first_prefix_last)] == None
+                                );
+                                self.right_cayley_graph[(u, first_prefix_last)] = Some(i);
                             }
                         }
                     } else {
-                        let product = self.elements[u].multiply(&self.generators[i]);
+                        let product = self.elements[u].multiply(&self.elements[i]);
                         match self.element_map.get(&product) {
                             // If we have already seen this element, add a new rule
-                            Some(index) => self.right_cayley_graph[(u, *index)] = Some(i),
+                            Some(&index) => {
+                                debug_assert!(self.right_cayley_graph[(u, index)] == None);
+                                self.right_cayley_graph[(u, index)] = Some(i)
+                            }
                             // Otherwise we have a new element, so we add to the collection.
                             None => {
+                                dbg!(&product);
                                 // Add the new element
                                 let new_pos = self.elements.len();
                                 self.elements.push(product.clone());
@@ -214,6 +261,7 @@ where
                                 self.left_cayley_graph.add_row();
                                 self.left_cayley_graph.add_col();
                                 // u * a_i = new element
+                                debug_assert!(self.right_cayley_graph[(u, new_pos)] == None);
                                 self.right_cayley_graph[(u, new_pos)] = Some(i);
                                 // TODO remove
                                 debug_assert!(self.elements.len() == self.element_map.len());
@@ -223,8 +271,9 @@ where
                                 debug_assert!(self.elements.len() == self.suffix.len());
                                 // Update length, this is simply one more than u
                                 self.length.push(self.length[u] + 1);
+                                dbg!(self.right_cayley_graph.get_row(u));
                                 // Update last
-                                last = new_pos
+                                last_elem = new_pos
                             }
                         }
                     }
@@ -235,14 +284,22 @@ where
             u = v;
             // Now compute a_i * u to fill in left cayley graph
             while self.length[u] == self.current_word_length {
+                dbg!(&u);
+                dbg!(&self.current_word_length);
                 let prefix = self.prefix[u].expect("Should be present.");
                 let last = self.last[u];
-                for i in 0..self.generators.len() {
+                for i in 1..=self.generators.len() {
                     // We work out what a_i * u is from prior information.
                     let res = {
+                        dbg!(prefix);
                         let ap = self
                             .get_left_cayley_element(prefix, i)
                             .expect("Should already be computed");
+                        dbg!(ap);
+                        dbg!(last);
+                        dbg!(self.length[ap]);
+                        dbg!(self.length[last]);
+                        dbg!(self.right_cayley_graph.get_row(ap));
                         self.get_right_cayley_element(ap, last)
                             .expect("Should already be computed.")
                     };
@@ -254,7 +311,7 @@ where
             }
             v = u;
             self.current_word_length += 1;
-            if u == last {
+            if u == last_elem || self.current_word_length > 10 {
                 break;
             }
         }
@@ -263,11 +320,11 @@ where
 
 impl<T, U> FroidurePinBuilder<T, U> for FroidurePin<T>
 where
-    T: SemigroupElement + std::hash::Hash,
+    T: SemigroupElement + std::hash::Hash + std::fmt::Debug,
     U: Semigroup<T>,
 {
-    fn new(semigroup: U) {
-        FroidurePin::new(semigroup.generators());
+    fn new(semigroup: &U) -> Self {
+        FroidurePin::new(semigroup)
     }
 
     fn build(mut self) -> FroidurePinResult<T> {
@@ -281,5 +338,50 @@ where
             left_cayley_graph: self.left_cayley_graph,
             right_cayley_graph: self.right_cayley_graph,
         }
+    }
+}
+
+mod tests {
+
+    use crate::element::transformation::Transformation;
+    use crate::semigroup::algs::froidure_pin::{FroidurePinBuilder, FroidurePinResult};
+    use crate::semigroup::impls::transformation::TransformationSemigroup;
+    use crate::semigroup::Semigroup;
+
+    use super::FroidurePin;
+
+    #[test]
+    fn trivial_monoid() {
+        // Trivial element for transformations of degree 3
+        let s =
+            TransformationSemigroup::new(&[Transformation::from_vec(3, vec![0, 1, 2]).unwrap()])
+                .unwrap();
+        let mut fp = FroidurePin::new(&s);
+        fp.run();
+        dbg!(&fp);
+    }
+
+    // #[test]
+    // fn symmetric_group_5() {
+    //     let s = TransformationSemigroup::new(&[
+    //         Transformation::from_vec(5, vec![1, 0, 2, 3, 4]).unwrap(),
+    //         Transformation::from_vec(5, vec![0, 2, 3, 4, 1]).unwrap(),
+    //     ])
+    //     .unwrap();
+    //     let (words, elems, _relations) = froidure_pin_simple(&s);
+    //     // empty word and id
+    //     assert!(words.len() == 120);
+    //     assert!(elems.len() == 120);
+    // }
+
+    #[test]
+    fn paper_example() {
+        let s = TransformationSemigroup::new(&[
+            Transformation::from_vec(6, vec![1, 1, 3, 3, 4, 5]).unwrap(),
+            Transformation::from_vec(6, vec![4, 2, 3, 3, 5, 5]).unwrap(),
+        ])
+        .unwrap();
+        let mut fp = FroidurePin::new(&s);
+        fp.run();
     }
 }

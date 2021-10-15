@@ -31,6 +31,6 @@ where
     U: Semigroup<T>,
     T: SemigroupElement,
 {
-    fn new(semigroup: U);
+    fn new(semigroup: &U) -> Self;
     fn build(self) -> FroidurePinResult<T>;
 }

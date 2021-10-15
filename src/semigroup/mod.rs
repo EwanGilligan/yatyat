@@ -17,6 +17,10 @@ where
     fn id(&self) -> Option<U> {
         None
     }
+    /// Return if a given element is the identity
+    fn is_id(&self, element: &U) -> bool {
+        false
+    }
     /// Return the generators of this Semigroup.
     fn generators(&self) -> &[U];
 }

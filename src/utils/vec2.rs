@@ -1,3 +1,4 @@
+use std::fmt::Display;
 use std::iter::repeat;
 use std::ops::{Index, IndexMut};
 use std::vec;
@@ -82,6 +83,26 @@ impl<T> Index<(usize, usize)> for Vec2<T> {
 impl<T> IndexMut<(usize, usize)> for Vec2<T> {
     fn index_mut(&mut self, (row, col): (usize, usize)) -> &mut Self::Output {
         &mut self.vec[row * self.n_cols + col]
+    }
+}
+
+impl<T> std::fmt::Display for Vec2<T>
+where
+    T: Display,
+{
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "[")?;
+        let mut sep: &str;
+        for i in 0..self.n_rows {
+            write!(f, "[")?;
+            sep = "";
+            for j in 0..self.n_cols {
+                write!(f, "{}{}", sep, self[(i, j)])?;
+                sep = ",";
+            }
+            write!(f, "]\n")?;
+        }
+        write!(f, "]")
     }
 }
 

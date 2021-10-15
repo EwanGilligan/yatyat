@@ -56,6 +56,11 @@ impl Semigroup<Transformation> for TransformationSemigroup {
     fn id(&self) -> Option<Transformation> {
         Some(Transformation::id(self.degree))
     }
+
+    fn is_id(&self, element: &Transformation) -> bool {
+        // Is the identity if it fixes all points.
+        (0..self.degree).all(|x| element.apply(x).map_or(false, |y| y == x))
+    }
 }
 
 #[cfg(test)]
