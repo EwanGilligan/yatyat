@@ -26,11 +26,12 @@ where
     right_cayley_graph: CayleyGraphType,
 }
 
-trait FroidurePinBuilder<T, U>
+trait FroidurePinBuilder<T>
 where
-    U: Semigroup<T>,
     T: SemigroupElement,
 {
-    fn new(semigroup: &U) -> Self;
+    fn new<U>(semigroup: &U) -> Self
+    where
+        U: Semigroup<T>;
     fn build(self) -> FroidurePinResult<T>;
 }
