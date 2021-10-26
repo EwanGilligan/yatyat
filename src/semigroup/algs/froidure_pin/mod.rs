@@ -10,6 +10,7 @@ mod simple;
 
 type CayleyGraphType = Vec2<Option<usize>>;
 
+#[derive(Debug)]
 struct FroidurePinResult<U>
 where
     U: SemigroupElement,
@@ -35,3 +36,56 @@ where
         U: Semigroup<T>;
     fn build(self) -> FroidurePinResult<T>;
 }
+
+/// Macro for testing multiple implementations.
+
+macro_rules! froidure_pin_test {
+    ($test_impl:ty, $name:ident) => {
+        #[cfg(test)]
+        mod $name {
+            use super::*;
+
+            use crate::element::transformation::Transformation;
+            use crate::semigroup::impls::transformation::TransformationSemigroup;
+
+            #[test]
+            fn trivial_monoid() {
+                // Trivial element for transformations of degree 3
+                let s = TransformationSemigroup::new(&[
+                    Transformation::from_vec(3, vec![0, 1, 2]).unwrap()
+                ])
+                .unwrap();
+                let fp = <$test_impl>::new(&s);
+                let res = fp.build();
+                dbg!(&res);
+                assert!(res.elements.len() == 1);
+            }
+
+            #[test]
+            fn symmetric_group_5() {
+                let s = TransformationSemigroup::new(&[
+                    Transformation::from_vec(5, vec![1, 0, 2, 3, 4]).unwrap(),
+                    Transformation::from_vec(5, vec![0, 2, 3, 4, 1]).unwrap(),
+                ])
+                .unwrap();
+                let fp = <$test_impl>::new(&s);
+                let res = fp.build();
+                assert!(res.elements.len() == 120);
+            }
+
+            #[test]
+            fn paper_example() {
+                let s = TransformationSemigroup::new(&[
+                    Transformation::from_vec(6, vec![1, 1, 3, 3, 4, 5]).unwrap(),
+                    Transformation::from_vec(6, vec![4, 2, 3, 3, 5, 5]).unwrap(),
+                ])
+                .unwrap();
+                let fp = <$test_impl>::new(&s);
+                let res = fp.build();
+                assert!(res.elements.len() == 7);
+            }
+        }
+    };
+}
+
+froidure_pin_test!(froidure_pin_impl::FroidurePin<Transformation>, FroidurePin);

@@ -123,6 +123,10 @@ impl SemigroupElement for Transformation {
         // Will panic if degrees do not match
         self.multiply(other).unwrap()
     }
+
+    fn is_id(&self) -> bool {
+        (0..self.degree).all(|x| self.apply(x).unwrap() == x)
+    }
 }
 
 impl std::fmt::Display for Transformation {

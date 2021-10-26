@@ -9,7 +9,7 @@ use crate::{
 };
 
 #[derive(Debug)]
-struct FroidurePin<T>
+pub struct FroidurePin<T>
 where
     T: SemigroupElement + std::hash::Hash,
 {
@@ -50,8 +50,14 @@ where
     where
         U: Semigroup<T>,
     {
-        // Filter out duplicate generators.
-        let generators: Vec<T> = gens.generators().iter().unique().cloned().collect();
+        // Filter out duplicate generators and the identity
+        let generators: Vec<T> = gens
+            .generators()
+            .iter()
+            .unique()
+            .filter(|s| !s.is_id())
+            .cloned()
+            .collect();
         // Initial elements are just the generators
         let mut elements = generators.clone();
         // Insert identity into position zero.
@@ -307,74 +313,5 @@ where
             left_cayley_graph: self.left_cayley_graph,
             right_cayley_graph: self.right_cayley_graph,
         }
-    }
-}
-
-mod tests {
-
-    use std::time::Instant;
-
-    use crate::element::transformation::Transformation;
-    use crate::semigroup::algs::froidure_pin::{FroidurePinBuilder, FroidurePinResult};
-    use crate::semigroup::impls::transformation::TransformationSemigroup;
-    use crate::semigroup::Semigroup;
-
-    use super::FroidurePin;
-
-    #[test]
-    fn trivial_monoid() {
-        // Trivial element for transformations of degree 3
-        let s =
-            TransformationSemigroup::new(&[Transformation::from_vec(3, vec![0, 1, 2]).unwrap()])
-                .unwrap();
-        let mut fp = FroidurePin::new(&s);
-        let res = fp.build();
-        assert!(res.elements.len() == 1);
-    }
-
-    #[test]
-    fn symmetric_group_5() {
-        let s = TransformationSemigroup::new(&[
-            Transformation::from_vec(5, vec![1, 0, 2, 3, 4]).unwrap(),
-            Transformation::from_vec(5, vec![0, 2, 3, 4, 1]).unwrap(),
-        ])
-        .unwrap();
-        let mut fp = FroidurePin::new(&s);
-        let res = fp.build();
-        assert!(res.elements.len() == 120);
-    }
-
-    #[test]
-    fn paper_example() {
-        let s = TransformationSemigroup::new(&[
-            Transformation::from_vec(6, vec![1, 1, 3, 3, 4, 5]).unwrap(),
-            Transformation::from_vec(6, vec![4, 2, 3, 3, 5, 5]).unwrap(),
-        ])
-        .unwrap();
-        let mut fp = FroidurePin::new(&s);
-        let res = fp.build();
-        assert!(res.elements.len() == 7);
-    }
-
-    #[test]
-    fn test() {
-        let s = TransformationSemigroup::new(&[
-            Transformation::from_vec(8, vec![1, 7, 2, 6, 0, 4, 1, 5]).unwrap(),
-            Transformation::from_vec(8, vec![2, 4, 6, 1, 4, 5, 2, 7]).unwrap(),
-            Transformation::from_vec(8, vec![3, 0, 7, 2, 4, 6, 2, 4]).unwrap(),
-            Transformation::from_vec(8, vec![3, 2, 3, 4, 5, 3, 0, 1]).unwrap(),
-            Transformation::from_vec(8, vec![4, 3, 7, 7, 4, 5, 0, 4]).unwrap(),
-            Transformation::from_vec(8, vec![5, 6, 3, 0, 3, 0, 5, 1]).unwrap(),
-            Transformation::from_vec(8, vec![6, 0, 1, 1, 1, 6, 3, 4]).unwrap(),
-            Transformation::from_vec(8, vec![7, 7, 4, 0, 6, 4, 1, 7]).unwrap(),
-        ])
-        .unwrap();
-        let start = Instant::now();
-        let mut fp = FroidurePin::new(&s);
-        fp.run();
-        let duration = start.elapsed();
-        println!("time={}s", duration.as_secs());
-        assert!(fp.elements.len() == 597369);
-        dbg!(fp.elements.len());
     }
 }
