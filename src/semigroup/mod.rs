@@ -18,7 +18,7 @@ where
         None
     }
     /// Return if a given element is the identity
-    fn is_id(&self, element: &U) -> bool {
+    fn is_id(&self, _element: &U) -> bool {
         false
     }
     /// Return the generators of this Semigroup.

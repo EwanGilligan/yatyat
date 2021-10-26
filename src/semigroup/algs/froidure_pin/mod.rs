@@ -85,7 +85,22 @@ macro_rules! froidure_pin_test {
                 assert!(res.elements.len() == 7);
             }
         }
+
+        //let s = TransformationSemigroup::new(&[
+        //         Transformation::from_vec(8, vec![1, 7, 2, 6, 0, 4, 1, 5]).unwrap(),
+        //         Transformation::from_vec(8, vec![2, 4, 6, 1, 4, 5, 2, 7]).unwrap(),
+        //         Transformation::from_vec(8, vec![3, 0, 7, 2, 4, 6, 2, 4]).unwrap(),
+        //         Transformation::from_vec(8, vec![3, 2, 3, 4, 5, 3, 0, 1]).unwrap(),
+        //         Transformation::from_vec(8, vec![4, 3, 7, 7, 4, 5, 0, 4]).unwrap(),
+        //         Transformation::from_vec(8, vec![5, 6, 3, 0, 3, 0, 5, 1]).unwrap(),
+        //         Transformation::from_vec(8, vec![6, 0, 1, 1, 1, 6, 3, 4]).unwrap(),
+        //         Transformation::from_vec(8, vec![7, 7, 4, 0, 6, 4, 1, 7]).unwrap(),
+        //     ])
     };
 }
 
-froidure_pin_test!(froidure_pin_impl::FroidurePin<Transformation>, FroidurePin);
+froidure_pin_test!(
+    froidure_pin_impl::FroidurePin<Transformation>,
+    froidure_pin_test
+);
+froidure_pin_test!(simple::FroidurePinSimple<Transformation>, simple_test);

@@ -96,7 +96,7 @@ where
             left_cayley_graph[(i, 0)] = Some(i);
             left_cayley_graph[(0, i)] = Some(i);
             right_cayley_graph[(i, 0)] = Some(i);
-            right_cayley_graph[(i, 0)] = Some(i);
+            right_cayley_graph[(0, i)] = Some(i);
         }
         let reduced = Vec2::new(elements.len(), elements.len());
         // Other information
@@ -222,7 +222,7 @@ where
                         match self.element_map.get(&product) {
                             // If we have already seen this element, add a new rule
                             Some(&index) => {
-                                //debug_assert!(self.right_cayley_graph[(u, index)] == None);
+                                //TODO add rule
                                 self.right_cayley_graph[(u, i)] = Some(index)
                             }
                             // Otherwise we have a new element, so we add to the collection.
