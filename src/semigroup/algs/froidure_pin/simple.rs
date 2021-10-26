@@ -4,10 +4,7 @@ use std::hash::Hash;
 
 use crate::{
     element::SemigroupElement,
-    semigroup::{
-        word::{Alphabet, Word},
-        Semigroup,
-    },
+    semigroup::{word::Word, Semigroup},
     utils::vec2::Vec2,
     DetHashMap,
 };

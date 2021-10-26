@@ -135,18 +135,18 @@ where
     A: Ord + Clone,
 {
     /// Create the empty word.
-    fn empty_word() -> Self {
+    pub fn empty_word() -> Self {
         Self {
             word: Rc::new(Vec::with_capacity(0)),
         }
     }
 
-    fn is_empty_word(&self) -> bool {
+    pub fn is_empty_word(&self) -> bool {
         self.word.is_empty()
     }
 
     /// Append to a word, giving a new word
-    fn append(&self, a: &A) -> Self {
+    pub fn append(&self, a: &A) -> Self {
         self.word
             .iter()
             .cloned()
@@ -155,14 +155,14 @@ where
     }
 
     /// Prepend to a word, giving a new word
-    fn prepend(&self, a: &A) -> Self {
+    pub fn prepend(&self, a: &A) -> Self {
         std::iter::once(a.clone())
             .chain(self.word.iter().cloned())
             .collect()
     }
 
     /// Return the length of the word.
-    fn len(&self) -> usize {
+    pub fn len(&self) -> usize {
         self.word.len()
     }
 }

@@ -1,3 +1,5 @@
+use std::iter::{repeat, repeat_with};
+
 use itertools::Itertools;
 
 use super::{CayleyGraphType, FroidurePinBuilder, FroidurePinResult};
@@ -130,14 +132,31 @@ where
         self.left_cayley_graph[(element, generator_index)]
     }
 
+    // Convert an index into a word of the generators
+    fn pos_to_word(&self, pos: usize) -> Word<usize> {
+        let mut cur_pos = pos;
+        // We repeatedly take the last value to create our word
+        repeat_with(move || {
+            let first = self.first[cur_pos];
+            cur_pos = self.suffix[cur_pos].unwrap();
+            first
+        })
+        .take(self.length[pos])
+        .collect()
+    }
+
     fn run(&mut self) {
         // First multiply all generators by themselves
-        for i in 0..=self.generators.len() {
-            for j in 0..=self.generators.len() {
+        for i in 1..=self.generators.len() {
+            for j in 1..=self.generators.len() {
                 let product = self.elements[i].multiply(&self.elements[j]);
                 match self.element_map.get(&product) {
                     Some(&index) => {
-                        // TODO add as a rule
+                        // Add rule
+                        let rhs = self.pos_to_word(index);
+                        let lhs = self.pos_to_word(i).append(&j);
+                        self.rewrite_rules.push((lhs, rhs));
+                        // Update cayley graphs
                         self.right_cayley_graph[(i, j)] = Some(index);
                         self.left_cayley_graph[(j, i)] = Some(index);
                     }
@@ -222,7 +241,11 @@ where
                         match self.element_map.get(&product) {
                             // If we have already seen this element, add a new rule
                             Some(&index) => {
-                                //TODO add rule
+                                // Add rule
+                                let rhs = self.pos_to_word(index);
+                                let lhs = self.pos_to_word(u).append(&i);
+                                self.rewrite_rules.push((lhs, rhs));
+                                // Update right cayley graph
                                 self.right_cayley_graph[(u, i)] = Some(index)
                             }
                             // Otherwise we have a new element, so we add to the collection.
