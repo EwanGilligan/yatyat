@@ -173,7 +173,6 @@ where
                         self.suffix.push(Some(j));
                         // Update reduced table
                         self.reduced.add_row();
-                        self.reduced.add_col();
                         self.reduced[(i, j)] = true;
                         // Update right cayley graph, left cayley graph will be done later
                         self.right_cayley_graph.add_row();
@@ -181,7 +180,6 @@ where
                         // a_i * a_j = new element
                         self.right_cayley_graph[(i, j)] = Some(new_pos);
                         self.left_cayley_graph[(j, i)] = Some(new_pos);
-                        // TODO remove
                         debug_assert!(self.elements.len() == self.element_map.len());
                         debug_assert!(self.elements.len() == self.first.len());
                         debug_assert!(self.elements.len() == self.last.len());
@@ -201,9 +199,7 @@ where
         // Take first non generator element
         let mut u = self.generators.len() + 1;
         let mut v = u;
-        let mut last_elem = self.elements.len() - 1;
         loop {
-            dbg!(self.current_word_length, self.elements.len());
             // Computation of u*a_i
             while u < self.elements.len() && self.length[u] == self.current_word_length {
                 let first = self.first[u];
@@ -266,7 +262,6 @@ where
                                 self.suffix.push(Some(suffix));
                                 // Update reduced table
                                 self.reduced.add_row();
-                                self.reduced.add_col();
                                 self.reduced[(u, i)] = true;
                                 // Update right cayley graph, left cayley graph will be done later
                                 self.right_cayley_graph.add_row();
@@ -276,8 +271,6 @@ where
                                 self.right_cayley_graph[(u, i)] = Some(new_pos);
                                 // Update length, this is simply one more than u
                                 self.length.push(self.length[u] + 1);
-                                // Update last
-                                last_elem = new_pos
                             }
                         }
                     }
@@ -307,7 +300,8 @@ where
             }
             v = u;
             self.current_word_length += 1;
-            if u == last_elem || self.current_word_length > 10 {
+            // Break if we've reached the last possible u
+            if u == self.elements.len() {
                 break;
             }
         }
@@ -336,5 +330,32 @@ where
             left_cayley_graph: self.left_cayley_graph,
             right_cayley_graph: self.right_cayley_graph,
         }
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use crate::{
+        element::transformation::Transformation,
+        semigroup::{
+            algs::froidure_pin::{
+                froidure_pin_impl::FroidurePin, simple::FroidurePinSimple, FroidurePinBuilder,
+            },
+            impls::transformation::TransformationSemigroup,
+        },
+    };
+
+    #[test]
+    fn transformation_monoid_5() {
+        let s = TransformationSemigroup::new(&[
+            Transformation::from_vec(5, vec![1, 0, 2, 3, 4]).unwrap(),
+            Transformation::from_vec(5, vec![1, 2, 3, 4, 0]).unwrap(),
+            Transformation::from_vec(5, vec![1, 1, 2, 3, 4]).unwrap(),
+        ])
+        .unwrap();
+        let fp = FroidurePin::new(&s);
+        let res = fp.build();
+        dbg!(&res.elements.len());
+        assert!(res.elements.len() == 3125);
     }
 }

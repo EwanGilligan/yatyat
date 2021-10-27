@@ -5,13 +5,13 @@ use crate::{
     DetHashMap,
 };
 
-mod froidure_pin_impl;
-mod simple;
+pub mod froidure_pin_impl;
+pub mod simple;
 
 type CayleyGraphType = Vec2<Option<usize>>;
 
 #[derive(Debug)]
-struct FroidurePinResult<U>
+pub struct FroidurePinResult<U>
 where
     U: SemigroupElement,
 {
@@ -27,7 +27,7 @@ where
     right_cayley_graph: CayleyGraphType,
 }
 
-trait FroidurePinBuilder<T>
+pub trait FroidurePinBuilder<T>
 where
     T: SemigroupElement,
 {
@@ -71,6 +71,19 @@ macro_rules! froidure_pin_test {
                 let fp = <$test_impl>::new(&s);
                 let res = fp.build();
                 assert!(res.elements.len() == 120);
+            }
+
+            #[test]
+            fn transformation_monoid_5() {
+                let s = TransformationSemigroup::new(&[
+                    Transformation::from_vec(5, vec![1, 0, 2, 3, 4]).unwrap(),
+                    Transformation::from_vec(5, vec![1, 2, 3, 4, 0]).unwrap(),
+                    Transformation::from_vec(5, vec![1, 1, 2, 3, 4]).unwrap(),
+                ])
+                .unwrap();
+                let fp = <$test_impl>::new(&s);
+                let res = fp.build();
+                assert!(res.elements.len() == 3125);
             }
 
             #[test]
